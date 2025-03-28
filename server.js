@@ -6,7 +6,7 @@ import url from "url";
 import { resolve } from "path";
 
 const oAppApi = new express();
-const oAiModel = new GoogleGenAI({ apiKey: "AIzaSyC6c9jwDAj6_tSythcRJ64dZ_CSat8JkQs" });
+const oAiModel = new GoogleGenAI({ apiKey: "dummy-key" });
 const iPort = 3000;
 
 //to get data from VCAP_SERVICES:: Applications running in Cloud Foundry gain access 
