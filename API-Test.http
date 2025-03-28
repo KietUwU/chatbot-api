@@ -1,0 +1,24 @@
+###
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyC6c9jwDAj6_tSythcRJ64dZ_CSat8JkQs
+Content-Type: application/json
+
+{
+    "contents": [{ 
+        "parts":[{"text": "Explain how AI works"}]
+    }]
+}
+
+###
+GET http://localhost:3000/get
+Authorization: Basic admin:supersecret
+
+###
+POST http://localhost:3000/post
+Authorization: Basic testUser:Megavnn123@@
+
+{
+    "contents": [{ 
+        "parts":[{"text": "Explain how AI works"}]
+    }]
+}
+

@@ -1,0 +1,30 @@
+{
+  "name": "chatbot-api",
+  "version": "1.0.0",
+  "description": "API for Chatbot Integration",
+  "homepage": "https://github.com/KietUwU/chatbot-api#readme",
+  "bugs": {
+    "url": "https://github.com/KietUwU/chatbot-api/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KietUwU/chatbot-api.git"
+  },
+  "license": "ISC",
+  "author": "KietUwU",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "node server",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@google/genai": "^0.7.0",
+    "axios": "^1.8.4",
+    "body-parser": "^2.2.0",
+    "compute-cosine-similarity": "^1.1.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "express-basic-auth": "^1.2.1"
+  }
+}
