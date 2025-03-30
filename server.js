@@ -4,6 +4,8 @@ import axios from "axios";
 import basicAuth from "express-basic-auth";
 import url from "url";
 import { resolve } from "path";
+import { promises } from "dns";
+import { rejects } from "assert";
 
 const oAppApi = new express();
 const oAiModel = new GoogleGenAI({ apiKey: "dummy-key" });
@@ -43,10 +45,21 @@ oAppApi.post("/post", async (req, res) => {
 });
 
 oAppApi.get("/podetails", async (req, res) => {
+    /* const sDestToken = await _fetchJwtToken(destSrvCred.url, destSrvCred.clientid, destSrvCred.clientsecret);
+    const oDestiConfig = await _readDestinationConfig("purchase-order-api", destSrvCred.uri, sDestToken); */
+    const sServiceUrl  = "https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/ykiet_srv_pochatbot_01_if_v4/srvd_a2x/sap/ykiet_srv_pochatbot/0001";
+    // queryParam = url.parse(req.url, true).query;
 
+    try {
+        const oResult = await _poDetails(sServiceUrl);
+        res.json(oResult);
+    } catch (oError) {
+        console.log('Catch an error: ', oError)
+        res.json({ "d": { "error": "error" } })
+    }
 });
 
-const _fetchToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
+const _fetchJwtToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
     return new Promise((resolve, reject) => {
         const sTokenUrl = sOAuthUrl + '/oauth/token?grant_type=client_credentials&response_type=token';
         const oConfig = {
@@ -87,8 +100,25 @@ const _readDestinationConfig = async (sDestinationName, sDestUri, sJwtToken) => 
     });
 };
 
-const _poDetails = async () => {
+const _poDetails = async (sServiceUrl) => {
+    return new Promise((resolve, reject) => {
+        const sTargetUrl = sServiceUrl + "/YKIET_CR_POCHATBOT";
+        const sEncodeUser = "KietPA7@fpt.com:Megavnn24120509@@";
+        //Buffer.from(oDestiConfi.User + ':' + oDestiConfi.Password).toString("base64");
+        const oConfig = {
+            headers: {
+                Authorization: "Basic " + sEncodeUser
+            }
+        };
 
+        axios.get(sTargetUrl, oConfig)
+            .then(oResponse => {
+                resolve(oResponse.data);
+            })
+            .catch(oError => {
+                reject(oError);
+            })
+    });
 };
 
 const _callAI = async () => {

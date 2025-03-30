@@ -22,3 +22,11 @@ Authorization: Basic testUser:Megavnn123@@
     }]
 }
 
+###
+GET http://localhost:3000/podetails
+Authorization: Basic testUser:Megavnn123@@
+
+###
+GET https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/ykiet_srv_pochatbot_01_if_v4/srvd_a2x/sap/ykiet_srv_pochatbot/0001
+Authorization: Basic KietPA7@fpt.com:Megavnn24120509@@
+
