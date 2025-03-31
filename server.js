@@ -4,6 +4,7 @@ import axios from "axios";
 import basicAuth from "express-basic-auth";
 import url from "url";
 import { Agent } from 'node:https';
+import { OData } from "@odata/client"
 
 const oAppApi = new express();
 const oAiModel = new GoogleGenAI({ apiKey: "dummy-key" });
@@ -43,16 +44,37 @@ oAppApi.post("/post", async (req, res) => {
 });
 
 oAppApi.get("/podetails", async (req, res) => {
-    const sTargetUrl = "https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001";
+    const sTargetUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/POSubcontractingComponent?$top=50";
     const sTargetObject = "PurchaseOrder";
 
-    try {
+    /* try {
         const oResult = await _poDetails(sTargetUrl, sTargetObject);
         res.json(oResult);
     } catch (oError) {
         console.log("oError : ", oError)
         res.json({ "d": { "error": "error" } })
+    }; */
+
+    const sOdataSrvUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/";
+    const oOdataClient = OData.New4({ serviceEndpoint: sOdataSrvUrl });
+
+    oOdataClient.setCredential({
+        APIKey: "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh"
+    });
+    let _selectPurchaseOrder = async () => {
+        console.log('Executing Query')
+
+        const oFilter = oOdataClient.newFilter().property("PurchaseOrder").eq("4500000001");
+
+        let result = await oOdataClient.newRequest({
+            collection: "PurchaseOrder",
+            params: oOdataClient.newParam().filter(oFilter)
+        })
+        console.log('Executed OData Query (1) successfully.')
+        console.log(JSON.stringify(result))
     };
+
+    _selectPurchaseOrder();
 });
 
 const _fetchToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
@@ -106,14 +128,18 @@ const _poDetails = async (sDestiConfg, sTargetObject) => {
         const sTargetUrl = sDestiConfg;
         const sEncodeUser = "dummy";
         const oConfig = {
-            "Authorization": "Basic " + sEncodeUser
+            // "Authorization": "Basic " + sEncodeUser
+            "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh",
+            "DataServiceVersion": "2.0",
+            "Accept": "application/json",
+            "Content-Type": "application/json"
         };
 
-        const oInstance = axios.create({
+        const oInstance = axios.create(/* {
             httpsAgent: new Agent({
                 rejectUnauthorized: false
             })
-        });
+        } */);
 
         oInstance.get(sTargetUrl, oConfig)
             .then(oResponse => {
