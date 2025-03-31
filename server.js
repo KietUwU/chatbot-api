@@ -3,6 +3,7 @@ import express, { response } from "express";
 import axios from "axios";
 import basicAuth from "express-basic-auth";
 import url from "url";
+import { Agent } from 'node:https';
 
 const oAppApi = new express();
 const oAiModel = new GoogleGenAI({ apiKey: "dummy-key" });
@@ -51,7 +52,7 @@ oAppApi.get("/podetails", async (req, res) => {
     } catch (oError) {
         console.log("oError : ", oError)
         res.json({ "d": { "error": "error" } })
-    }
+    };
 });
 
 const _fetchToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
@@ -62,8 +63,13 @@ const _fetchToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
                 Authorization: "Basic " + Buffer.from(sOAuthClient + ':' + sOAuthSecret).toString("base64")
             }
         };
+        const oInstance = axios.create({
+            httpsAgent: new Agent({
+                rejectUnauthorized: false
+            })
+        });
 
-        axios.get(sTokenUrl, oConfig)
+        oInstance.get(sTokenUrl, oConfig)
             .then(oResponse => {
                 resolve(oResponse.data.access_token);
             })
@@ -98,14 +104,18 @@ const _readDestinationConfig = async (sDestinationName, sDestUri, sJwtToken) => 
 const _poDetails = async (sDestiConfg, sTargetObject) => {
     return new Promise((resolve, reject) => {
         const sTargetUrl = sDestiConfg;
-        const sEncodeUser = "dummy-user:12345678";
+        const sEncodeUser = "dummy";
         const oConfig = {
-            headers: {
-                "Authorization": "Basic " + sEncodeUser
-            }
+            "Authorization": "Basic " + sEncodeUser
         };
 
-        axios.get(sTargetUrl, oConfig)
+        const oInstance = axios.create({
+            httpsAgent: new Agent({
+                rejectUnauthorized: false
+            })
+        });
+
+        oInstance.get(sTargetUrl, oConfig)
             .then(oResponse => {
                 resolve(oResponse.data)
             })
