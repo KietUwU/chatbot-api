@@ -40,7 +40,7 @@ oAppApi.get("/get", (req, res) => {
     res.send("<p>Welcome to Gemini API Gateway</p><p>Service is Up & Running </p><p></p>" + Date());
 });
 
-oAppApi.post("/post", async (req, res) => {
+oAppApi.post("/callGemini", async (req, res) => {
     console.log('Gemini API Req : ', req.body.contents);
 
     const oResult = await _callAI();
