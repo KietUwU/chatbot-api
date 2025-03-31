@@ -1,11 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
-import express from "express";
+import express, { response } from "express";
 import axios from "axios";
 import basicAuth from "express-basic-auth";
 import url from "url";
-import { resolve } from "path";
-import { promises } from "dns";
-import { rejects } from "assert";
+import { Agent } from 'node:https';
+import { OData } from "@odata/client";
+import { PurchaseOrder } from "/home/node/chatbot-api/API-Entities/CE_PURCHASEORDER_0001";
 
 const oAppApi = new express();
 const oAiModel = new GoogleGenAI({ apiKey: "dummy-key" });
@@ -45,18 +45,38 @@ oAppApi.post("/post", async (req, res) => {
 });
 
 oAppApi.get("/podetails", async (req, res) => {
-    /* const sDestToken = await _fetchJwtToken(destSrvCred.url, destSrvCred.clientid, destSrvCred.clientsecret);
-    const oDestiConfig = await _readDestinationConfig("purchase-order-api", destSrvCred.uri, sDestToken); */
-    const sServiceUrl  = "https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/ykiet_srv_pochatbot_01_if_v4/srvd_a2x/sap/ykiet_srv_pochatbot/0001";
-    // queryParam = url.parse(req.url, true).query;
+    const sTargetUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/POSubcontractingComponent?$top=50";
+    const sTargetObject = "PurchaseOrder";
 
-    try {
-        const oResult = await _poDetails(sServiceUrl);
+    /* try {
+        const oResult = await _poDetails(sTargetUrl, sTargetObject);
         res.json(oResult);
     } catch (oError) {
-        console.log('Catch an error: ', oError)
+        console.log("oError : ", oError)
         res.json({ "d": { "error": "error" } })
-    }
+    }; */
+
+    const sOdataSrvUrl = "https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/";
+    const oOdataClient = OData.New4({ serviceEndpoint: sOdataSrvUrl });
+
+    oOdataClient.setCredential({
+        username: "KietPA7@fpt.com",
+        password: "Megavnn24120509@@"
+    });
+    let _selectPurchaseOrder = async () => {
+        console.log('Executing Query')
+
+        const oFilter = oOdataClient.newFilter().property("PurchaseOrder").eq("4500000001");
+
+        let result = await oOdataClient.newRequest({
+            collection: "PurchaseOrder",
+            params: oOdataClient.newParam().filter(oFilter)
+        })
+        console.log('Executed OData Query (1) successfully.')
+        console.log(JSON.stringify(result))
+    };
+
+    _selectPurchaseOrder();
 });
 
 const _fetchJwtToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
@@ -67,8 +87,13 @@ const _fetchJwtToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
                 Authorization: "Basic " + Buffer.from(sOAuthClient + ':' + sOAuthSecret).toString("base64")
             }
         };
+        const oInstance = axios.create({
+            httpsAgent: new Agent({
+                rejectUnauthorized: false
+            })
+        });
 
-        axios.get(sTokenUrl, oConfig)
+        oInstance.get(sTokenUrl, oConfig)
             .then(oResponse => {
                 resolve(oResponse.data.access_token);
             })
@@ -100,24 +125,32 @@ const _readDestinationConfig = async (sDestinationName, sDestUri, sJwtToken) => 
     });
 };
 
-const _poDetails = async (sServiceUrl) => {
+const _poDetails = async (sDestiConfg, sTargetObject) => {
     return new Promise((resolve, reject) => {
-        const sTargetUrl = sServiceUrl + "/YKIET_CR_POCHATBOT";
-        const sEncodeUser = "KietPA7@fpt.com:Megavnn24120509@@";
-        //Buffer.from(oDestiConfi.User + ':' + oDestiConfi.Password).toString("base64");
+        const sTargetUrl = sDestiConfg;
+        const sEncodeUser = "dummy";
         const oConfig = {
-            headers: {
-                Authorization: "Basic " + sEncodeUser
-            }
+            // "Authorization": "Basic " + sEncodeUser
+            "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh",
+            "DataServiceVersion": "2.0",
+            "Accept": "application/json",
+            "Content-Type": "application/json"
         };
 
-        axios.get(sTargetUrl, oConfig)
-            .then(oResponse => {
-                resolve(oResponse.data);
+        const oInstance = axios.create(/* {
+            httpsAgent: new Agent({
+                rejectUnauthorized: false
             })
+        } */);
+
+        oInstance.get(sTargetUrl, oConfig)
+            .then(oResponse => {
+                resolve(oResponse.data)
+           })
             .catch(oError => {
                 reject(oError);
             })
+            ;
     });
 };
 
