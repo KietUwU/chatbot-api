@@ -45,8 +45,10 @@ oAppApi.post("/post", async (req, res) => {
 });
 
 oAppApi.get("/podetails", async (req, res) => {
-    const sTargetUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/POSubcontractingComponent?$top=50";
-    const sTargetObject = "PurchaseOrder";
+    /* const sDestToken = await _fetchJwtToken(destSrvCred.url, destSrvCred.clientid, destSrvCred.clientsecret);
+    const oDestiConfig = await _readDestinationConfig("purchase-order-api", destSrvCred.uri, sDestToken); */
+    const sServiceUrl  = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001";
+    // queryParam = url.parse(req.url, true).query;
 
     /* try {
         const oResult = await _poDetails(sTargetUrl, sTargetObject);
@@ -127,14 +129,12 @@ const _readDestinationConfig = async (sDestinationName, sDestUri, sJwtToken) => 
 
 const _poDetails = async (sDestiConfg, sTargetObject) => {
     return new Promise((resolve, reject) => {
-        const sTargetUrl = sDestiConfg;
-        const sEncodeUser = "dummy";
+        const sTargetUrl = sServiceUrl + "/PurchaseOrder";
+        //Buffer.from(oDestiConfi.User + ':' + oDestiConfi.Password).toString("base64");
         const oConfig = {
-            // "Authorization": "Basic " + sEncodeUser
-            "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh",
-            "DataServiceVersion": "2.0",
-            "Accept": "application/json",
-            "Content-Type": "application/json"
+            headers: {
+                "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh"
+            }
         };
 
         const oInstance = axios.create(/* {
