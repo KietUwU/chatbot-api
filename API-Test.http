@@ -9,7 +9,7 @@ Content-Type: application/json
 }
 
 ###
-GET http://localhost:3000/get
+GET http://localhost:3000/podetails
 Authorization: Basic admin:supersecret
 
 ###
@@ -22,3 +22,10 @@ Authorization: Basic testUser:Megavnn123@@
     }]
 }
 
+###
+GET https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/
+{
+            "headers": [{
+                "Authorization": ["Basic": "KietPA7@fpt.com:Megavnn24120509@@"]
+            }]
+        }

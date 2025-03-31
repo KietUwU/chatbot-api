@@ -1,9 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
-import express from "express";
+import express, { response } from "express";
 import axios from "axios";
 import basicAuth from "express-basic-auth";
 import url from "url";
-import { resolve } from "path";
 
 const oAppApi = new express();
 const oAiModel = new GoogleGenAI({ apiKey: "dummy-key" });
@@ -43,7 +42,16 @@ oAppApi.post("/post", async (req, res) => {
 });
 
 oAppApi.get("/podetails", async (req, res) => {
+    const sTargetUrl = "https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001";
+    const sTargetObject = "PurchaseOrder";
 
+    try {
+        const oResult = await _poDetails(sTargetUrl, sTargetObject);
+        res.json(oResult);
+    } catch (oError) {
+        console.log("oError : ", oError)
+        res.json({ "d": { "error": "error" } })
+    }
 });
 
 const _fetchToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
@@ -87,8 +95,25 @@ const _readDestinationConfig = async (sDestinationName, sDestUri, sJwtToken) => 
     });
 };
 
-const _poDetails = async () => {
+const _poDetails = async (sDestiConfg, sTargetObject) => {
+    return new Promise((resolve, reject) => {
+        const sTargetUrl = sDestiConfg;
+        const sEncodeUser = "dummy-user:12345678";
+        const oConfig = {
+            headers: {
+                "Authorization": "Basic " + sEncodeUser
+            }
+        };
 
+        axios.get(sTargetUrl, oConfig)
+            .then(oResponse => {
+                resolve(oResponse.data)
+            })
+            .catch(oError => {
+                reject(oError);
+            })
+            ;
+    });
 };
 
 const _callAI = async () => {
