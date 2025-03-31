@@ -4,7 +4,8 @@ import axios from "axios";
 import basicAuth from "express-basic-auth";
 import url from "url";
 import { Agent } from 'node:https';
-import { OData } from "@odata/client"
+import { OData } from "@odata/client";
+import { PurchaseOrder } from "/home/node/chatbot-api/API-Entities/CE_PURCHASEORDER_0001";
 
 const oAppApi = new express();
 const oAiModel = new GoogleGenAI({ apiKey: "dummy-key" });
@@ -55,11 +56,12 @@ oAppApi.get("/podetails", async (req, res) => {
         res.json({ "d": { "error": "error" } })
     }; */
 
-    const sOdataSrvUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/";
+    const sOdataSrvUrl = "https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/";
     const oOdataClient = OData.New4({ serviceEndpoint: sOdataSrvUrl });
 
     oOdataClient.setCredential({
-        APIKey: "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh"
+        username: "KietPA7@fpt.com",
+        password: "Megavnn24120509@@"
     });
     let _selectPurchaseOrder = async () => {
         console.log('Executing Query')
