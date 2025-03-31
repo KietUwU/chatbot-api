@@ -25,7 +25,3 @@ Authorization: Basic testUser:Megavnn123@@
         "parts":[{"text": "Explain how AI works"}]
     }]
 }
-
-###
-GET https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrder?$filter=PurchaseOrder%20eq%20%274500000000%27
-Authorization: Basic 

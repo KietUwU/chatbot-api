@@ -6,4 +6,4 @@ applications:
   buildpacks:
   - nodejs_buildpack
   services:
-  - abap-cloud-destination-instance
+  - purchase-order-api

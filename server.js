@@ -79,7 +79,7 @@ oAppApi.get("/podetails", async (req, res) => {
     _selectPurchaseOrder();
 });
 
-const _fetchToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
+const _fetchJwtToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
     return new Promise((resolve, reject) => {
         const sTokenUrl = sOAuthUrl + '/oauth/token?grant_type=client_credentials&response_type=token';
         const oConfig = {
@@ -146,7 +146,7 @@ const _poDetails = async (sDestiConfg, sTargetObject) => {
         oInstance.get(sTargetUrl, oConfig)
             .then(oResponse => {
                 resolve(oResponse.data)
-            })
+           })
             .catch(oError => {
                 reject(oError);
             })
