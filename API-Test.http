@@ -17,11 +17,29 @@ GET http://localhost:3000/podetails
 Authorization: Basic admin:supersecret
 
 ###
-POST http://localhost:3000/post
+POST http://localhost:3000/callGemini
 Authorization: Basic testUser:Megavnn123@@
+content-type: application/json
 
 {
-    "contents": [{ 
-        "parts":[{"text": "Explain how AI works"}]
-    }]
+    "contents": { 
+        "parts":{"text": "Please help me get 5 rows of Purchase Order data from the SAP server."}
+    }
 }
+
+###
+GET http://localhost:3000/podetails
+Authorization: Basic testUser:Megavnn123@@
+
+###
+GET https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrder?$top=5&$count=true
+Authorization: Basic 
+Accept: application/json
+X-CSRF-Token: fetch
+
+###
+GET https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrderItem?$top=5&$count=false
+APIKey: "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh"
+Accept: application/json
+X-CSRF-Token: fetch
+

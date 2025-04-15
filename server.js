@@ -1,14 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
-import express, { response } from "express";
+import { Type } from '@google/genai';
+import express, { json } from "express";
 import axios from "axios";
 import basicAuth from "express-basic-auth";
 import url from "url";
 import { Agent } from 'node:https';
-import { OData } from "@odata/client";
-import { PurchaseOrder } from "/home/node/chatbot-api/API-Entities/CE_PURCHASEORDER_0001";
 
 const oAppApi = new express();
-const oAiModel = new GoogleGenAI({ apiKey: "dummy-key" });
+const oAiModel = new GoogleGenAI({ apiKey: "AIzaSyC6c9jwDAj6_tSythcRJ64dZ_CSat8JkQs" });
 const iPort = 3000;
 
 //to get data from VCAP_SERVICES:: Applications running in Cloud Foundry gain access 
@@ -20,15 +19,17 @@ const conSrvCred = VCAP_SERVICES.connectivity[0].credentials; */
 // Data File
 const sDataFilePath = 'data.json';
 
-oAppApi.use(basicAuth({
-    users: {
-        'admin': 'supersecret',
-        'testUser': 'Megavnn123@@'
-    }
-}));
+oAppApi.use(
+    basicAuth({
+        users: {
+            'admin': 'supersecret',
+            'testUser': 'Megavnn123@@'
+        }
+    }),
+    express.json());
 
 oAppApi.listen(iPort, (oError) => {
-    console.log(`OpenAI API is running on port ${iPort}`);
+    console.log(`Gemini API is running on port ${iPort}`);
 
     if (oError) {
         console.log("Error : ", oError);
@@ -39,44 +40,48 @@ oAppApi.get("/get", (req, res) => {
     res.send("<p>Welcome to Gemini API Gateway</p><p>Service is Up & Running </p><p></p>" + Date());
 });
 
-oAppApi.post("/post", async (req, res) => {
-    const sResult = await _callAI();
-    res.send(sResult);
+oAppApi.post("/callGemini", async (req, res) => {
+    console.log('Req Body Type : ', typeof (req.body.contents.parts.text));
+    console.log('Gemini API Req Body : ', req.body.contents.parts.text);
+
+    const oResult = await _callAI(req.body.contents.parts.text);
+    if (oResult.functionCalls) {
+        console.log(oResult);
+        console.log(oResult.functionCalls);
+        //res.send(oResult);
+        const oToolCall = oResult.functionCalls[0];
+
+        if (oToolCall.name === 'get_purchase_order') {
+            try {
+                const oQueryResult = await _poDetails(oToolCall.args.query_object, oToolCall.args.limit);
+                res.json(oQueryResult);
+            } catch (oError) {
+                console.log("oError : ", oError)
+                res.json({ "d": { "error": "error" } })
+            };
+        };
+    } else {
+        console.log(oResult);
+        console.log("Gemini cannot process this request. Please try again.");
+    };
+
 });
 
 oAppApi.get("/podetails", async (req, res) => {
-    const sTargetUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/POSubcontractingComponent?$top=50";
-    const sTargetObject = "PurchaseOrder";
+    /* const sDestToken = await _fetchJwtToken(destSrvCred.url, destSrvCred.clientid, destSrvCred.clientsecret);
+    const oDestiConfig = await _readDestinationConfig("purchase-order-api", destSrvCred.uri, sDestToken); */
+    const sServiceUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001";
+    const sServiceObj = "PurchaseOrder";
+    const iLimit = 5;
+    // queryParam = url.parse(req.url, true).query;
 
-    /* try {
-        const oResult = await _poDetails(sTargetUrl, sTargetObject);
+    try {
+        const oResult = await _poDetails(sServiceObj, iLimit);
         res.json(oResult);
     } catch (oError) {
         console.log("oError : ", oError)
         res.json({ "d": { "error": "error" } })
-    }; */
-
-    const sOdataSrvUrl = "https://my402028.s4hana.cloud.sap/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/";
-    const oOdataClient = OData.New4({ serviceEndpoint: sOdataSrvUrl });
-
-    oOdataClient.setCredential({
-        username: "KietPA7@fpt.com",
-        password: "Megavnn24120509@@"
-    });
-    let _selectPurchaseOrder = async () => {
-        console.log('Executing Query')
-
-        const oFilter = oOdataClient.newFilter().property("PurchaseOrder").eq("4500000001");
-
-        let result = await oOdataClient.newRequest({
-            collection: "PurchaseOrder",
-            params: oOdataClient.newParam().filter(oFilter)
-        })
-        console.log('Executed OData Query (1) successfully.')
-        console.log(JSON.stringify(result))
     };
-
-    _selectPurchaseOrder();
 });
 
 const _fetchJwtToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
@@ -125,28 +130,29 @@ const _readDestinationConfig = async (sDestinationName, sDestUri, sJwtToken) => 
     });
 };
 
-const _poDetails = async (sDestiConfg, sTargetObject) => {
+const _poDetails = async (sServiceObj, iLimit) => {
     return new Promise((resolve, reject) => {
-        const sTargetUrl = sDestiConfg;
-        const sEncodeUser = "dummy";
+        const sServiceUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001";
+        const sTargetUrl = `${sServiceUrl}/${sServiceObj}?$top=${iLimit}`;
+        //Buffer.from(oDestiConfi.User + ':' + oDestiConfi.Password).toString("base64");
         const oConfig = {
-            // "Authorization": "Basic " + sEncodeUser
-            "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh",
-            "DataServiceVersion": "2.0",
-            "Accept": "application/json",
-            "Content-Type": "application/json"
+            headers: {
+                "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh"
+            }
         };
 
-        const oInstance = axios.create(/* {
+        const oInstance = axios.create({
             httpsAgent: new Agent({
                 rejectUnauthorized: false
             })
-        } */);
+        });
+
+        console.log('sTargetUrl : ', sTargetUrl);
 
         oInstance.get(sTargetUrl, oConfig)
             .then(oResponse => {
                 resolve(oResponse.data)
-           })
+            })
             .catch(oError => {
                 reject(oError);
             })
@@ -154,12 +160,41 @@ const _poDetails = async (sDestiConfg, sTargetObject) => {
     });
 };
 
-const _callAI = async () => {
+const _callAI = async (sPrompt) => {
+    const oGetPoFromPrompt = {
+        name: 'get_purchase_order',
+        description: 'Get the data from SAP server.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                query_object: {
+                    type: Type.STRING,
+                    enum: ['PurchaseOrder', 'PurchaseOrderItem'],
+                    description: 'Types of information that can be selected, which can be `PurchaseOrder` or `PurchaseOrderItem`.',
+                },
+                limit: {
+                    type: Type.NUMBER,
+                    description: 'The number of rows that can be selected, which can range from 5 to 100.',
+                }
+            },
+            required: ['query_object', 'limit'],
+        },
+    };
+    const oConfig = {
+        tools: [{
+            functionDeclarations: [oGetPoFromPrompt]
+        }]
+    };
+    const oContents = [{
+        "parts": [{ "text": sPrompt }]
+    }];
+
+    console.log("Prompt Contents : ", sPrompt);
+
     const response = await oAiModel.models.generateContent({
         model: "gemini-2.0-flash",
-        contents: [{
-            "parts": [{ "text": "Please explain how AI works in a few word." }]
-        }],
+        contents: oContents,
+        config: oConfig
     });
-    return response.text;
+    return response;
 };

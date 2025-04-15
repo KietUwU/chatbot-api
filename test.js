@@ -1,23 +1,20 @@
-var data = null;
+import axios from "axios";
 
-var xhr = new XMLHttpRequest();
-xhr.withCredentials = false;
+// Define the API endpoint
+const sUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrder";
 
-xhr.addEventListener("readystatechange", function () {
-  if (this.readyState === this.DONE) {
-    console.log(this.responseText);
-  }
-});
+// Set headers with API key
+const oHeaders = {
+    headers: {
+        "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh"
+    }
+};
 
-//setting request method
-//API endpoint for API sandbox 
-xhr.open("GET", "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrder?%24count=true&%24top=50");
-
-
-//adding request headers
-xhr.setRequestHeader("DataServiceVersion", "2.0");
-xhr.setRequestHeader("Accept", "application/json");
-
-
-//sending request
-xhr.send(data);
+// Make the GET request
+axios.get(sUrl, oHeaders)
+    .then((response) => {
+        console.log("Response Data:", response.data);
+    })
+    .catch((error) => {
+        console.error("Error:", error.response ? error.response.data : error.message);
+    });
