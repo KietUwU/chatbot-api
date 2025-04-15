@@ -7,7 +7,7 @@ import url from "url";
 import { Agent } from 'node:https';
 
 const oAppApi = new express();
-const oAiModel = new GoogleGenAI({ apiKey: "dummy" });
+const oAiModel = new GoogleGenAI({ apiKey: "AIzaSyC6c9jwDAj6_tSythcRJ64dZ_CSat8JkQs" });
 const iPort = 3000;
 
 //to get data from VCAP_SERVICES:: Applications running in Cloud Foundry gain access 
@@ -26,7 +26,7 @@ oAppApi.use(
             'testUser': 'Megavnn123@@'
         }
     }),
-    json());
+    express.json());
 
 oAppApi.listen(iPort, (oError) => {
     console.log(`Gemini API is running on port ${iPort}`);
@@ -41,21 +41,28 @@ oAppApi.get("/get", (req, res) => {
 });
 
 oAppApi.post("/callGemini", async (req, res) => {
-    console.log('Gemini API Req : ', req.body.contents);
+    console.log('Req Body Type : ', typeof (req.body.contents.parts.text));
+    console.log('Gemini API Req Body : ', req.body.contents.parts.text);
 
-    const oResult = await _callAI();
-    console.log(oResult.functionCalls[0]);
-    //res.send(oResult);
-    const oToolCall = oResult.functionCalls[0];
+    const oResult = await _callAI(req.body.contents.parts.text);
+    if (oResult.functionCalls) {
+        console.log(oResult);
+        console.log(oResult.functionCalls);
+        //res.send(oResult);
+        const oToolCall = oResult.functionCalls[0];
 
-    if (oToolCall.name === 'get_purchase_order') {
-        try {
-            const oQueryResult = await _poDetails(oToolCall.args.query_object, oToolCall.args.limit);
-            res.json(oQueryResult);
-        } catch (oError) {
-            console.log("oError : ", oError)
-            res.json({ "d": { "error": "error" } })
+        if (oToolCall.name === 'get_purchase_order') {
+            try {
+                const oQueryResult = await _poDetails(oToolCall.args.query_object, oToolCall.args.limit);
+                res.json(oQueryResult);
+            } catch (oError) {
+                console.log("oError : ", oError)
+                res.json({ "d": { "error": "error" } })
+            };
         };
+    } else {
+        console.log(oResult);
+        console.log("Gemini cannot process this request. Please try again.");
     };
 
 });
@@ -134,11 +141,11 @@ const _poDetails = async (sServiceObj, iLimit) => {
             }
         };
 
-        const oInstance = axios.create(/* {
+        const oInstance = axios.create({
             httpsAgent: new Agent({
                 rejectUnauthorized: false
             })
-        } */);
+        });
 
         console.log('sTargetUrl : ', sTargetUrl);
 
@@ -153,7 +160,7 @@ const _poDetails = async (sServiceObj, iLimit) => {
     });
 };
 
-const _callAI = async () => {
+const _callAI = async (sPrompt) => {
     const oGetPoFromPrompt = {
         name: 'get_purchase_order',
         description: 'Get the data from SAP server.',
@@ -179,8 +186,10 @@ const _callAI = async () => {
         }]
     };
     const oContents = [{
-        "parts": [{ "text": "Please help me get 5 rows of Purchase Order data from the SAP server." }]
+        "parts": [{ "text": sPrompt }]
     }];
+
+    console.log("Prompt Contents : ", sPrompt);
 
     const response = await oAiModel.models.generateContent({
         model: "gemini-2.0-flash",

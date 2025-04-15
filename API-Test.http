@@ -1,5 +1,5 @@
 ###
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyC6c9jwDAj6_tSythcRJ64dZ_CSat8JkQs
 Content-Type: application/json
 
 {
@@ -17,13 +17,14 @@ GET http://localhost:3000/podetails
 Authorization: Basic admin:supersecret
 
 ###
-POST http://localhost:3000/post
+POST http://localhost:3000/callGemini
 Authorization: Basic testUser:Megavnn123@@
+content-type: application/json
 
 {
-    "contents": [{ 
-        "parts":[{"text": "Explain how AI works"}]
-    }]
+    "contents": { 
+        "parts":{"text": "Please help me get 5 rows of Purchase Order data from the SAP server."}
+    }
 }
 
 ###
