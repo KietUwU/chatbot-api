@@ -22,10 +22,13 @@
     "@google/genai": "^0.7.0",
     "@odata/client": "^2.21.10",
     "axios": "^1.8.4",
+    "botbuilder": "^4.23.2",
     "compute-cosine-similarity": "^1.1.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^4.21.2",
-    "express-basic-auth": "^1.2.1"
+    "express-basic-auth": "^1.2.1",
+    "restify": "^11.1.0"
   },
   "devDependencies": {
     "@sap-cloud-sdk/generator": "^3.26.4",
