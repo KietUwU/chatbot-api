@@ -23,3 +23,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.swp
+
+# Ignore all files in the temp directory
+temp/
