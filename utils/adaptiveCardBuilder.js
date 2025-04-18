@@ -7,20 +7,10 @@ export   function buildCardForPOList(poList = []) {
       "type": "AdaptiveCard",
       "version": "1.3",
       "body": [
-        {
-          "type": "TextBlock",
-          "text": "Pending Purchase Orders",
-          "weight": "Bolder",
-          "size": "Large"
-        },
+       
         {
           "type": "TextBlock",
           "text": poText || "No pending POs.",
-          "wrap": true
-        },
-        {
-          "type": "TextBlock",
-          "text": "Type 'Approve PO 123' or 'Reject PO 124' to take action.",
           "wrap": true
         }
       ]
