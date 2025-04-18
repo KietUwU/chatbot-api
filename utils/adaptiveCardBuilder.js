@@ -1,6 +1,6 @@
 // utils/adaptiveCardBuilder.js
 export   function buildCardForPOList(poList = []) {
-    const poText = poList.map(po => `- PO #${po.number} | ${po.amount} | ${po.owner}`).join('\n');
+    const poText = poList.map(po => `- PO #${po.PurchaseOrder} | ${po.PurchaseOrderType} | ${po.PurchasingDocumentOrigin}`).join('\n');
   
     return {
       "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
