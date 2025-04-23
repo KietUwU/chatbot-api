@@ -1,0 +1,24 @@
+{
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.3",
+    "body": [
+      {
+        "type": "TextBlock",
+        "text": "Pending Purchase Orders",
+        "weight": "Bolder",
+        "size": "Large"
+      },
+      {
+        "type": "TextBlock",
+        "text": "- PO #123 | $5,000 | Nguyen A\n- PO #124 | $3,200 | Tran B",
+        "wrap": true
+      },
+      {
+        "type": "TextBlock",
+        "text": "Type 'Approve PO 123' or 'Reject PO 124' to take action.",
+        "wrap": true
+      }
+    ]
+  }
+  

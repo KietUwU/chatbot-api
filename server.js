@@ -5,7 +5,7 @@ import axios from "axios";
 import basicAuth from "express-basic-auth";
 import url from "url";
 import { Agent } from 'node:https';
-
+import { buildCardForPOList } from './utils/adaptiveCardBuilder.js';
 const oAppApi = new express();
 const oAiModel = new GoogleGenAI({ apiKey: "AIzaSyC6c9jwDAj6_tSythcRJ64dZ_CSat8JkQs" });
 const iPort = 3000;
@@ -38,6 +38,13 @@ oAppApi.listen(iPort, (oError) => {
 
 oAppApi.get("/get", (req, res) => {
     res.send("<p>Welcome to Gemini API Gateway</p><p>Service is Up & Running </p><p></p>" + Date());
+    const poList = [
+        { number: 123, amount: "$500", owner: "John Doe" },
+        { number: 124, amount: "$300", owner: "Jane Smith" }
+    ];
+
+    const adaptiveCard = buildCardForPOList(poList);
+    res.json(adaptiveCard);
 });
 
 oAppApi.post("/callGemini", async (req, res) => {
@@ -54,11 +61,23 @@ oAppApi.post("/callGemini", async (req, res) => {
         if (oToolCall.name === 'get_purchase_order') {
             try {
                 const oQueryResult = await _poDetails(oToolCall.args.query_object, oToolCall.args.limit);
-                res.json(oQueryResult);
+                console.log("oQueryResult:", oQueryResult);
+
+                // Ensure poList is an array
+                const poList = oQueryResult.value || []; // Adjust based on the actual API response structure
+
+                if (!Array.isArray(poList)) {
+                    console.error("Invalid poList format:", poList);
+                    res.json({ error: "Invalid data format from API" });
+                    return;
+                }
+
+                const adaptiveCard = buildCardForPOList(poList); // Generate the adaptive card
+                res.json(adaptiveCard); // Send the adaptive card as the response
             } catch (oError) {
-                console.log("oError : ", oError)
-                res.json({ "d": { "error": "error" } })
-            };
+                console.log("oError:", oError);
+                res.json({ "d": { "error": "error" } });
+            }
         };
     } else {
         console.log(oResult);
