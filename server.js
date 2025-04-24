@@ -5,7 +5,7 @@ import axios from "axios";
 import basicAuth from "express-basic-auth";
 import url from "url";
 import { Agent } from 'node:https';
-import { buildCardForPOList } from './utils/adaptiveCardBuilder.js';
+import { buildCardForConfirmation, buildCardForPOList } from './utils/adaptiveCardBuilder.js';
 const oAppApi = new express();
 const oAiModel = new GoogleGenAI({ apiKey: "AIzaSyC6c9jwDAj6_tSythcRJ64dZ_CSat8JkQs" });
 const iPort = 3000;
@@ -79,6 +79,42 @@ oAppApi.post("/callGemini", async (req, res) => {
                 res.json({ "d": { "error": "error" } });
             }
         };
+        if (oToolCall.name === 'approve_purchase_order') {
+            try {
+                const oApproveResult = await _approvePO('PurchaseOrder', oToolCall.args.purchase_order_number);
+                console.log("oApproveResult:", oApproveResult);
+
+                const poItem = oApproveResult.value || {}; // Adjust based on the actual API response structure
+                if (!poItem) {
+                    console.error("Invalid poItem format:", poItem);
+                    res.json({ error: "Invalid data format from API" });
+                    return;
+                }
+                const adaptiveCard = buildCardForConfirmation(poItem.po_number||'','approve'); // Generate the adaptive card
+                res.json(adaptiveCard); // Send the adaptive card as the response
+            } catch (oError) {
+                console.log("oError:", oError);
+                res.json({ "d": { "error": "error" } });
+            }
+        }
+        if (oToolCall.name === 'reject_purchase_order') {
+            try {
+                const oRejectResult = await _rejectPO('PurchaseOrder', oToolCall.args.purchase_order_number);
+                console.log("oRejectResult:", oRejectResult);
+
+                const poItem = oRejectResult.value || {}; // Adjust based on the actual API response structure
+                if (!poItem) {
+                    console.error("Invalid poItem format:", poItem);
+                    res.json({ error: "Invalid data format from API" });
+                    return;
+                }
+                const adaptiveCard = buildCardForConfirmation(poItem.po_number||'','reject'); // Generate the adaptive card
+                res.json(adaptiveCard); // Send the adaptive card as the response
+            } catch (oError) {
+                console.log("oError:", oError);
+                res.json({ "d": { "error": "error" } });
+            }
+        }
     } else {
         console.log(oResult);
         console.log("Gemini cannot process this request. Please try again.");
@@ -179,6 +215,64 @@ const _poDetails = async (sServiceObj, iLimit) => {
     });
 };
 
+const _approvePO = async (sServiceObj, sPurchaseOrderNumber) => {
+    return new Promise((resolve, reject) => {
+        const sServiceUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001";
+        const sTargetUrl = `${sServiceUrl}/${sServiceObj}('${sPurchaseOrderNumber}')/approve`;
+        const oConfig = {
+            headers: {
+                "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh"
+            }
+        };
+
+        const oInstance = axios.create({
+            httpsAgent: new Agent({
+                rejectUnauthorized: false
+            })
+        });
+
+        console.log('sTargetUrl : ', sTargetUrl);
+
+        oInstance.post(sTargetUrl, oConfig)
+            .then(oResponse => {
+                resolve(oResponse.data)
+            })
+            .catch(oError => {
+                reject(oError);
+            })
+            ;
+    });
+}
+
+const _rejectPO = async (sServiceObj, sPurchaseOrderNumber) => {
+    return new Promise((resolve, reject) => {
+        const sServiceUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001";
+        const sTargetUrl = `${sServiceUrl}/${sServiceObj}('${sPurchaseOrderNumber}')/reject`;
+        const oConfig = {
+            headers: {
+                "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh"
+            }
+        };
+
+        const oInstance = axios.create({
+            httpsAgent: new Agent({
+                rejectUnauthorized: false
+            })
+        });
+
+        console.log('sTargetUrl : ', sTargetUrl);
+
+        oInstance.post(sTargetUrl, oConfig)
+            .then(oResponse => {
+                resolve(oResponse.data)
+            })
+            .catch(oError => {
+                reject(oError);
+            })
+            ;
+    });
+}
+
 const _callAI = async (sPrompt) => {
     const oGetPoFromPrompt = {
         name: 'get_purchase_order',
@@ -199,9 +293,55 @@ const _callAI = async (sPrompt) => {
             required: ['query_object', 'limit'],
         },
     };
+    const oGetPODetails = {
+        name: 'get_purchase_order_details',
+        description: 'Get the details of Purchase Order.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                purchase_order_number: {
+                    type: Type.STRING,
+                    description: 'The purchase order number to be fetched.',
+                },
+                limit: {
+                    type: Type.NUMBER,
+                    description: 'The number of rows that can be selected, which can range from 5 to 100.',
+                }
+            },
+            required: ['purchase_order_number', 'limit'],
+        },
+    };
+    const oApprovePO = {
+        name: 'approve_purchase_order',
+        description: 'Approve the purchase order.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                purchase_order_number: {
+                    type: Type.STRING,
+                    description: 'The purchase order number to be approved.',
+                }
+            },
+            required: ['purchase_order_number'],
+        },
+    };
+    const oRejectPO = {
+        name: 'reject_purchase_order',
+        description: 'Reject the purchase order.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                purchase_order_number: {
+                    type: Type.STRING,
+                    description: 'The purchase order number to be rejected.',
+                }
+            },
+            required: ['purchase_order_number'],
+        },
+    };
     const oConfig = {
         tools: [{
-            functionDeclarations: [oGetPoFromPrompt]
+            functionDeclarations: [oGetPoFromPrompt, oGetPODetails, oApprovePO, oRejectPO],
         }]
     };
     const oContents = [{
