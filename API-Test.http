@@ -28,6 +28,39 @@ content-type: application/json
 }
 
 ###
+POST http://localhost:3000/callGemini
+Authorization: Basic testUser:Megavnn123@@
+content-type: application/json
+
+{
+    "contents": { 
+        "parts":{"text": "Please help me get detail of PO 4500000001."}
+    }
+}
+
+###
+POST http://localhost:3000/callGemini
+Authorization: Basic testUser:Megavnn123@@
+content-type: application/json
+
+{
+    "contents": { 
+        "parts":{"text": "I want to approve PO 4500000001."}
+    }
+}
+
+###
+POST http://localhost:3000/callGemini
+Authorization: Basic testUser:Megavnn123@@
+content-type: application/json
+
+{
+    "contents": { 
+        "parts":{"text": "I want to reject PO 4500000001."}
+    }
+}
+
+###
 GET http://localhost:3000/podetails
 Authorization: Basic testUser:Megavnn123@@
 

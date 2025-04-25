@@ -79,18 +79,34 @@ oAppApi.post("/callGemini", async (req, res) => {
                 res.json({ "d": { "error": "error" } });
             }
         };
-        if (oToolCall.name === 'approve_purchase_order') {
+        if (oToolCall.name === 'get_purchase_order_details') {  
             try {
-                const oApproveResult = await _approvePO('PurchaseOrder', oToolCall.args.purchase_order_number);
-                console.log("oApproveResult:", oApproveResult);
+                const oGetPODetails = await _poInformation('PurchaseOrder',oToolCall.args.purchase_order_number);
+                console.log("oGetPODetails:", oGetPODetails);
 
-                const poItem = oApproveResult.value || {}; // Adjust based on the actual API response structure
-                if (!poItem) {
-                    console.error("Invalid poItem format:", poItem);
+                if (!oGetPODetails) {
+                    console.error("Invalid poItem format:", oGetPODetails);
                     res.json({ error: "Invalid data format from API" });
                     return;
                 }
-                const adaptiveCard = buildCardForConfirmation(poItem.po_number||'','approve'); // Generate the adaptive card
+                const adaptiveCard = buildCardForConfirmation(oGetPODetails||{},'detail'); // Generate the adaptive card
+                res.json(adaptiveCard); // Send the adaptive card as the response
+            } catch (oError) {
+                console.log("oError:", oError);
+                res.json({ "d": { "error": "error" } });
+            }
+        };
+        if (oToolCall.name === 'approve_purchase_order') {
+            try {
+                const oGetPODetails = await _poInformation('PurchaseOrder',oToolCall.args.purchase_order_number);
+                console.log("oGetPODetails:", oGetPODetails);
+
+                if (!oGetPODetails) {
+                    console.error("Invalid poItem format:", oGetPODetails);
+                    res.json({ error: "Invalid data format from API" });
+                    return;
+                }
+                const adaptiveCard = buildCardForConfirmation(oGetPODetails||{},'approve'); // Generate the adaptive card
                 res.json(adaptiveCard); // Send the adaptive card as the response
             } catch (oError) {
                 console.log("oError:", oError);
@@ -99,16 +115,15 @@ oAppApi.post("/callGemini", async (req, res) => {
         }
         if (oToolCall.name === 'reject_purchase_order') {
             try {
-                const oRejectResult = await _rejectPO('PurchaseOrder', oToolCall.args.purchase_order_number);
-                console.log("oRejectResult:", oRejectResult);
+                const oGetPODetails = await _poInformation('PurchaseOrder',oToolCall.args.purchase_order_number);
+                console.log("oGetPODetails:", oGetPODetails);
 
-                const poItem = oRejectResult.value || {}; // Adjust based on the actual API response structure
-                if (!poItem) {
-                    console.error("Invalid poItem format:", poItem);
+                if (!oGetPODetails) {
+                    console.error("Invalid poItem format:", oGetPODetails);
                     res.json({ error: "Invalid data format from API" });
                     return;
                 }
-                const adaptiveCard = buildCardForConfirmation(poItem.po_number||'','reject'); // Generate the adaptive card
+                const adaptiveCard = buildCardForConfirmation(oGetPODetails||{},'reject'); // Generate the adaptive card
                 res.json(adaptiveCard); // Send the adaptive card as the response
             } catch (oError) {
                 console.log("oError:", oError);
@@ -138,6 +153,19 @@ oAppApi.get("/podetails", async (req, res) => {
         res.json({ "d": { "error": "error" } })
     };
 });
+
+oAppApi.get("/getpo", async (req, res) => {
+        const sPurchaseOrderNumber = req.query.PurchaseOrder;
+        const sServiceObj = "PurchaseOrder";
+        try {
+            const oResult = await _poInformation(sServiceObj, sPurchaseOrderNumber);
+            res.json(oResult);
+        } catch (oError) {
+            console.log("oError : ", oError)
+            res.json({ "d": { "error": "error" } })
+        };
+    }
+);
 
 const _fetchJwtToken = async (sOAuthUrl, sOAuthClient, sOAuthSecret) => {
     return new Promise((resolve, reject) => {
@@ -190,6 +218,35 @@ const _poDetails = async (sServiceObj, iLimit) => {
         const sServiceUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001";
         const sTargetUrl = `${sServiceUrl}/${sServiceObj}?$top=${iLimit}`;
         //Buffer.from(oDestiConfi.User + ':' + oDestiConfi.Password).toString("base64");
+        const oConfig = {
+            headers: {
+                "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh"
+            }
+        };
+
+        const oInstance = axios.create({
+            httpsAgent: new Agent({
+                rejectUnauthorized: false
+            })
+        });
+
+        console.log('sTargetUrl : ', sTargetUrl);
+
+        oInstance.get(sTargetUrl, oConfig)
+            .then(oResponse => {
+                resolve(oResponse.data)
+            })
+            .catch(oError => {
+                reject(oError);
+            })
+            ;
+    });
+};
+
+const _poInformation = async (sServiceObj, sPurchaseOrderNumber) => {
+    return new Promise((resolve, reject) => {
+        const sServiceUrl = "https://sandbox.api.sap.com/s4hanacloud/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001";
+        const sTargetUrl = `${sServiceUrl}/${sServiceObj}('${sPurchaseOrderNumber}')`;
         const oConfig = {
             headers: {
                 "APIKey": "CuZbkJRtlUMBAtEKZIkrg0DC1EGPjDgh"
@@ -299,6 +356,11 @@ const _callAI = async (sPrompt) => {
         parameters: {
             type: Type.OBJECT,
             properties: {
+                query_object: {
+                    type: Type.STRING,
+                    enum: ['PurchaseOrder'],
+                    description: 'Types of information that can be selected, which can be `PurchaseOrder` or `PurchaseOrderItem`.',
+                },
                 purchase_order_number: {
                     type: Type.STRING,
                     description: 'The purchase order number to be fetched.',
